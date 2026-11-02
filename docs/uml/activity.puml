@@ -1,0 +1,41 @@
+@startuml
+
+start
+
+:Open Application (index.html);
+:Enter Login Credentials;
+
+if (Credentials Valid?) then (yes)
+  :Create Session (Cookie);
+  :Redirect to color.html;
+
+  fork
+    :Add Color;
+    :Enter Color Name;
+    :Send POST to AddColor.php;
+    if (Color Added?) then (yes)
+      :Display "Color has been added";
+    else (no)
+      :Show Error;
+    endif
+  fork again
+    :Search Colors;
+    :Enter Search Term;
+    :Send POST to SearchColors.php;
+    if (Results Found?) then (yes)
+      :Display Matching Colors;
+    else (no)
+      :Display "No Records Found";
+    endif
+  end fork
+
+  :Click Logout;
+  :Clear Cookie;
+  :Redirect to index.html;
+else (no)
+  :Display "User/Password combination incorrect";
+endif
+
+stop
+
+@enduml

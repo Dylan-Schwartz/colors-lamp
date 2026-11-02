@@ -1,0 +1,66 @@
+@startuml
+
+class User {
+  - userId: int
+  - firstName: string
+  - lastName: string
+  - login: string
+  - password: string
+  + login(login, password): bool
+  + logout(): void
+  + getUserId(): int
+}
+
+class Color {
+  - colorId: int
+  - userId: int
+  - name: string
+  + addColor(userId, name): bool
+  + searchColors(userId, term): Color[]
+}
+
+class LoginAPI {
+  + getRequestInfo(): object
+  + sendResultInfoAsJson(obj): void
+  + returnWithError(err): void
+  + returnWithInfo(firstName, lastName, id): void
+  + authenticate(login, password): User
+}
+
+class AddColorAPI {
+  + getRequestInfo(): object
+  + sendResultInfoAsJson(obj): void
+  + returnWithError(err): void
+  + insertColor(userId, name): bool
+}
+
+class SearchColorsAPI {
+  + getRequestInfo(): object
+  + sendResultInfoAsJson(obj): void
+  + returnWithError(err): void
+  + returnWithInfo(results): void
+  + search(userId, term): Color[]
+}
+
+class ColorApp {
+  - urlBase: string
+  - userId: int
+  - firstName: string
+  - lastName: string
+  + doLogin(): void
+  + saveCookie(): void
+  + readCookie(): void
+  + doLogout(): void
+  + addColor(): void
+  + searchColor(): void
+}
+
+User --> Color : owns
+ColorApp --> LoginAPI : calls
+ColorApp --> AddColorAPI : calls
+ColorApp --> SearchColorsAPI : calls
+LoginAPI ..> User : returns
+AddColorAPI ..> Color : creates
+SearchColorsAPI ..> Color : retrieves
+
+@enduml

@@ -1,0 +1,25 @@
+@startuml
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "User" as User
+
+rectangle "Colors-Lamp Application" {
+  usecase "Login" as UC1
+  usecase "Add Color" as UC2
+  usecase "Search Colors" as UC3
+  usecase "Logout" as UC4
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+
+UC1 ..> UC2 : <<include>>
+UC1 ..> UC3 : <<include>>
+UC2 ..> UC1 : <<extend>> (if not logged in)
+UC3 ..> UC1 : <<extend>> (if not logged in)
+
+@enduml
