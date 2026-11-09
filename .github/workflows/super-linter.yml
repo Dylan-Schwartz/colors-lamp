@@ -29,11 +29,12 @@ jobs:
 
       - name: Install linters and formatters
         run: |
-          npm install -g eslint stylelint stylelint-config-standard htmlhint prettier
+          npm install -g eslint@8.57.0 stylelint stylelint-config-standard htmlhint prettier
 
       - name: Create linter configuration files
         run: |
           echo '{
+            "root": true,
             "extends": "eslint:recommended",
             "parserOptions": { "ecmaVersion": 2021, "sourceType": "module" },
             "env": { "browser": true, "node": true }
