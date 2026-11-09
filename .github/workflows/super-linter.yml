@@ -1,43 +1,67 @@
 name: Lint and Auto-Fix
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
 permissions:
-  contents: write      # Required to push fixes
-  statuses: write      # Required to report status checks
+  contents: write
 
 jobs:
-  lint-and-fix:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
         with:
-          fetch-depth: 0 # Super-Linter needs full history
+          php-version: '8.2'
+          tools: phpcs
 
-      - name: Run Super-Linter in Fix Mode
-        uses: super-linter/super-linter@v7
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Enable fix mode for desired linters
-          FIX_SHELL_SHFMT: true
-          FIX_YAML_PRETTIER: true
-          FIX_PHP: true
-          FIX_JS: true
-          FIX_CSS: true
-          # Add other FIX_* variables for PHP, JS, CSS, etc.
-          # Example: FIX_JAVASCRIPT_ES: true
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Commit and Push Fixes
-        # This step runs only if the previous step made changes
-        if: success() || failure()
+      - name: Install linters and formatters
         run: |
-          if [[ `git status --porcelain` ]]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "chore: auto-fix linting issues"
-            git push
-          fi
+          npm install -g eslint stylelint stylelint-config-standard htmlhint prettier
+
+      - name: Create linter configuration files
+        run: |
+          echo '{
+            "extends": "eslint:recommended",
+            "parserOptions": { "ecmaVersion": 2021, "sourceType": "module" },
+            "env": { "browser": true, "node": true }
+          }' > .eslintrc.json
+          echo '{
+            "extends": "stylelint-config-standard"
+          }' > .stylelintrc.json
+          echo 'html/js/md5.js' > .eslintignore
+
+      - name: Run linters with auto-fix
+        uses: wearerequired/lint-action@v3
+        with:
+          auto_fix: true
+          commit: false
+          php_codesniffer: true
+          php_codesniffer_args: '--standard=PSR12'
+          eslint: true
+          stylelint: true
+          prettier: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate HTML
+        run: npx htmlhint "html/**/*.html"
+
+      - name: Format HTML, CSS, JS with Prettier
+        run: npx prettier --write "html/**/*.html" "html/**/*.css" "html/**/*.js"
+
+      - name: Commit and push fixes
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: 'chore: auto-fix linting issues'
