@@ -1,35 +1,43 @@
-# This workflow executes several linters on changed files based on languages used in your code base whenever
-# you push a code or open a pull request.
-#
-# You can adjust the behavior by modifying this file.
-# For more information, see:
-# https://github.com/github/super-linter
-name: Lint Code Base
+name: Lint and Auto-Fix
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
+
 permissions:
-  contents: write
-  statuses: write
+  contents: write      # Required to push fixes
+  statuses: write      # Required to report status checks
+
 jobs:
-  run-lint:
+  lint-and-fix:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          # Full git history is needed to get a proper list of changed files within `super-linter`
-          fetch-depth: 0
+          fetch-depth: 0 # Super-Linter needs full history
 
-      - name: Lint Code Base
-        uses: github/super-linter@v4
+      - name: Run Super-Linter in Fix Mode
+        uses: super-linter/super-linter@v7
         env:
-          VALIDATE_ALL_CODEBASE: true
-          FIX_CSS_PRETTIER: true
-          FIX_HTML_PRETTIER: true
-          FIX_JS_PRETTIER: true
-          DEFAULT_BRANCH: "main"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Enable fix mode for desired linters
+          FIX_SHELL_SHFMT: true
+          FIX_YAML_PRETTIER: true
+          FIX_PHP: true
+          FIX_JS: true
+          FIX_CSS: true
+          # Add other FIX_* variables for PHP, JS, CSS, etc.
+          # Example: FIX_JAVASCRIPT_ES: true
+
+      - name: Commit and Push Fixes
+        # This step runs only if the previous step made changes
+        if: success() || failure()
+        run: |
+          if [[ `git status --porcelain` ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore: auto-fix linting issues"
+            git push
+          fi
