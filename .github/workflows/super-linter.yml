@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# Grant write permissions so the workflow can push the fixes.
 permissions:
   contents: write
   statuses: write
@@ -17,31 +18,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Full history is needed for Super-Linter to properly analyze files.
           fetch-depth: 0
 
       - name: Lint and Auto-Fix Code Base
-        uses: github/super-linter@v4
+        uses: super-linter/super-linter@v7
         env:
-          # Lint the entire codebase on every run
           VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: "main"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          # --- Enable Auto-Fix for Specific Languages ---
-          # CSS (via Prettier)
+          # --- Enable Fix Mode for Specific Languages ---
           FIX_CSS_PRETTIER: true
-          # HTML (via Prettier)
           FIX_HTML_PRETTIER: true
-          # JavaScript (via ESLint for linting and Prettier for formatting)
           FIX_JAVASCRIPT_ES: true
           FIX_JAVASCRIPT_PRETTIER: true
-          # PHP (via PHP_CodeSniffer)
           FIX_PHP_PHPCS: true
 
       - name: Commit and Push Fixes
-        # This step runs even if the linter "failed" after making fixes.
-        if: success() || failure()
+        if: always()
         run: |
           if [[ `git status --porcelain` ]]; then
             git config user.name "github-actions[bot]"
