@@ -1,0 +1,52 @@
+name: Lint and Auto-Fix Code Base
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+  statuses: write
+
+jobs:
+  run-lint-and-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Full history is needed for Super-Linter to properly analyze files.
+          fetch-depth: 0
+
+      - name: Lint and Auto-Fix Code Base
+        uses: github/super-linter@v4
+        env:
+          # Lint the entire codebase on every run
+          VALIDATE_ALL_CODEBASE: true
+          DEFAULT_BRANCH: "main"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # --- Enable Auto-Fix for Specific Languages ---
+          # CSS (via Prettier)
+          FIX_CSS_PRETTIER: true
+          # HTML (via Prettier)
+          FIX_HTML_PRETTIER: true
+          # JavaScript (via ESLint for linting and Prettier for formatting)
+          FIX_JAVASCRIPT_ES: true
+          FIX_JAVASCRIPT_PRETTIER: true
+          # PHP (via PHP_CodeSniffer)
+          FIX_PHP_PHPCS: true
+
+      - name: Commit and Push Fixes
+        # This step runs even if the linter "failed" after making fixes.
+        if: success() || failure()
+        run: |
+          if [[ `git status --porcelain` ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore: auto-fix linting and formatting issues"
+            git push
+          fi
