@@ -10,7 +10,6 @@
     "test": "jest",
     "lint": "eslint",
     "lint:fix": "eslint . --fix"
-    "test": "jest"
   },
   "jest": {
     "testEnvironment": "jsdom",
